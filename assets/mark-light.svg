@@ -1,0 +1,8 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="84.3" height="44" viewBox="361 104.5 478 249.5" role="img" aria-labelledby="title desc">
+<title id="title">Alex F&#246;ldv&#225;ri</title><desc id="desc">AF monogram</desc>
+<defs><linearGradient id="ma" x1="0%" y1="0%" x2="100%" y2="100%"><stop offset="0%" stop-color="#111318"/><stop offset="100%" stop-color="#24272D"/></linearGradient>
+<linearGradient id="mf" x1="0%" y1="50%" x2="100%" y2="50%"><stop offset="0%" stop-color="#1749C6"/><stop offset="100%" stop-color="#3485FF"/></linearGradient></defs>
+<path d="M365 350L510 115Q518 102 527 115L675 350L600 350L521 222L442 350Z" fill="url(#ma)"/>
+<path d="M555 115H835L792 178Q785 188 770 188H598Z" fill="url(#mf)"/>
+<path d="M610 218H765L730 275Q723 286 708 286H650Z" fill="#17191D"/>
+</svg>
