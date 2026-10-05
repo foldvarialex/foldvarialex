@@ -1,9 +1,15 @@
-name: Activity card
+name: Profile cards
 
 on:
   schedule:
     - cron: '17 3 * * *'
+    - cron: '41 4 * * 1'
   workflow_dispatch:
+    inputs:
+      quality:
+        description: Also run Lighthouse and the foldvari.ch tests for the quality card
+        type: boolean
+        default: true
 
 permissions:
   contents: write
@@ -15,7 +21,7 @@ concurrency:
 jobs:
   update:
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v5
 
@@ -23,23 +29,117 @@ jobs:
         with:
           node-version: 24
 
+      - name: Decide which cards to render
+        id: plan
+        env:
+          EVENT: ${{ github.event_name }}
+          SCHEDULE: ${{ github.event.schedule }}
+          QUALITY_INPUT: ${{ inputs.quality }}
+        run: |
+          daily=true
+          quality=false
+          if [ "$EVENT" = "schedule" ] && [ "$SCHEDULE" = "41 4 * * 1" ]; then
+            daily=false
+            quality=true
+          elif [ "$EVENT" = "workflow_dispatch" ] && [ "$QUALITY_INPUT" = "true" ]; then
+            quality=true
+          fi
+          echo "daily=$daily" >> "$GITHUB_OUTPUT"
+          echo "quality=$quality" >> "$GITHUB_OUTPUT"
+          mkdir -p "$RUNNER_TEMP/new"
+
       - name: Render activity card
-        run: node scripts/activity.mjs
+        id: activity
+        if: steps.plan.outputs.daily == 'true'
+        continue-on-error: true
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          node scripts/activity.mjs
+          cp assets/activity-dark.svg assets/activity-light.svg "$RUNNER_TEMP/new/"
 
       - name: Render experience timeline
+        id: timeline
+        if: steps.plan.outputs.daily == 'true'
+        continue-on-error: true
+        env:
+          TIMELINE_OUT: ${{ runner.temp }}/new
         run: node scripts/timeline.mjs
+
+      - name: Render languages card
+        id: languages
+        if: steps.plan.outputs.daily == 'true'
+        continue-on-error: true
+        env:
+          LANGS_TOKEN: ${{ secrets.LANGS_TOKEN }}
+          CARDS_OUT: ${{ runner.temp }}/new
+        run: node scripts/languages.mjs
+
+      - name: Measure foldvari.ch with Lighthouse
+        id: lighthouse
+        if: steps.plan.outputs.quality == 'true'
+        continue-on-error: true
+        run: |
+          mkdir -p "$RUNNER_TEMP/lighthouse"
+          for run in 1 2 3; do
+            npx --yes lighthouse@12 https://foldvari.ch/en \
+              --output=json --output-path="$RUNNER_TEMP/lighthouse/run-$run.json" \
+              --only-categories=performance,accessibility,best-practices,seo \
+              --chrome-flags="--headless=new --no-sandbox" --quiet \
+              || echo "::warning::Lighthouse run $run failed"
+          done
+
+      - name: Run the foldvari.ch test suite
+        id: tests
+        if: steps.plan.outputs.quality == 'true'
+        continue-on-error: true
+        run: |
+          git clone --depth 1 https://github.com/foldvarialex/foldvari.ch "$RUNNER_TEMP/site"
+          cd "$RUNNER_TEMP/site"
+          npm ci --no-audit --no-fund
+          npx vitest run --reporter=json --outputFile="$RUNNER_TEMP/vitest.json"
+
+      - name: Render quality card
+        id: quality
+        if: steps.plan.outputs.quality == 'true'
+        continue-on-error: true
+        env:
+          LH_JSON: ${{ runner.temp }}/lighthouse
+          TESTS_JSON: ${{ runner.temp }}/vitest.json
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          CARDS_OUT: ${{ runner.temp }}/new
+        run: node scripts/quality.mjs
 
       - name: Publish the cards to the output branch
         run: |
+          shopt -s nullglob
+          fresh=("$RUNNER_TEMP"/new/*.svg)
+          if [ ${#fresh[@]} -eq 0 ]; then
+            echo "No card was rendered, the output branch stays as it is"
+            exit 0
+          fi
           mkdir -p "$RUNNER_TEMP/cards"
-          cp assets/activity-dark.svg assets/activity-light.svg assets/timeline-dark.svg assets/timeline-light.svg "$RUNNER_TEMP/cards/"
+          if git fetch --quiet --depth 1 origin output; then
+            git archive FETCH_HEAD | tar -x -C "$RUNNER_TEMP/cards"
+          fi
+          cp "${fresh[@]}" "$RUNNER_TEMP/cards/"
           git config user.name "github-actions[bot]"
           git config user.email "41898283+github-actions[bot]@users.noreply.github.com"
           git checkout --quiet --orphan output
           git rm -rfq .
           cp "$RUNNER_TEMP/cards/"*.svg .
-          git add activity-dark.svg activity-light.svg timeline-dark.svg timeline-light.svg
-          git commit -qm "Update activity card and timeline"
+          git add -- *.svg
+          git commit -qm "Update profile cards"
           git push --quiet --force origin output
+
+      - name: Flag cards that kept their previous version
+        if: always()
+        env:
+          OUTCOMES: ${{ steps.activity.outcome }} ${{ steps.timeline.outcome }} ${{ steps.languages.outcome }} ${{ steps.quality.outcome }}
+        run: |
+          case " $OUTCOMES " in
+            *" failure "*)
+              echo "::warning::At least one card was not rendered and keeps its previous version ($OUTCOMES)"
+              exit 1
+              ;;
+          esac
