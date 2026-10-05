@@ -40,7 +40,7 @@ Public repositories: [foldvari.ch source](https://github.com/foldvarialex/foldva
 
 **The operating system for Swiss sole traders.** Founder and sole developer · `2026` · waitlist open, launching soon.
 
-<a href="https://www.solory.ch"><img src="assets/work/solory.png" width="100%" alt="Two Solory app windows in dark mode: invoice QR-2026-014 with three line items, VAT 8.1%, a total of CHF 3'675.40, a Swiss QR-bill and a matched bank credit, and behind it a camt.053 bank reconciliation with 4 of 4 credits auto-matched. Demo data."></a>
+<a href="https://www.solory.ch"><img src="assets/work/solory.png" width="100%" alt="Two Solory app windows in dark mode. In front, invoice INV-2026-0150 for Studio Nova AG is marked Paid, with the PDF invoice in the built-in viewer, a total of CHF 1&#39;400.00, the bank transfer in the payment history and the invoice email as delivered. Behind it is the dashboard with outstanding, expenses and net profit, plus an upcoming cantonal tax deadline. Demo data."></a>
 <sub>Product UI with demo data</sub>
 
 - Swiss QR invoicing, clients, time tracking, expenses and contracts in one workspace
