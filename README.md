@@ -85,14 +85,6 @@ Portfolio and business site in German, English and Hungarian. The source is publ
 - DE/EN/HU routes with hreflang, JSON-LD, a strict Content Security Policy and region-aware cookie consent for analytics
 - Serverless lead API with validation shared by client and server, and an admin dashboard with scrypt hashing and optional TOTP
 
-<picture>
-  <source media="(prefers-color-scheme: dark)" srcset="https://raw.githubusercontent.com/foldvarialex/foldvarialex/output/quality-dark.svg">
-  <source media="(prefers-color-scheme: light)" srcset="https://raw.githubusercontent.com/foldvarialex/foldvarialex/output/quality-light.svg">
-  <img alt="Quality of foldvari.ch: Lighthouse scores on mobile for Performance, Accessibility, Best Practices and SEO, the number of automated tests in the Vitest suite and the result of the latest CI run on main, measured weekly." src="https://raw.githubusercontent.com/foldvarialex/foldvarialex/output/quality-light.svg" width="100%">
-</picture>
-
-<sub>Measured every Monday by a GitHub Action: Lighthouse on mobile (median of three runs), the test suite from a fresh clone, and the CI status of main.</sub>
-
 ## Experience
 
 <picture>
